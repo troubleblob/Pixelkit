@@ -1,0 +1,164 @@
+esphome:
+  name: pixelkit
+  platform: ESP32
+  board: esp32dev
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "P0QzXtQ9Hpyl8bNVr9HLeYtCppKYqnwZYj/mFU0wmV4="
+
+#web_server:
+#  port: 80
+
+ota:
+  password: "589fd3378a17d8dc4cabfe66a5f1da89"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Pixelkit Fallback Hotspot"
+    password: "X7c0jHU6UhXH"
+
+captive_portal:
+
+########## Setup #######################
+ 
+text_sensor:
+  - platform: homeassistant
+    name: "Matrix Text"
+    entity_id: input_text.led_matrix_text
+    id: led_matrix_text
+
+font:
+  - id: tinyfont
+    file: "lexis.ttf"
+    size: 8
+ 
+light:
+  - platform: fastled_clockless
+    chipset: WS2811
+    pin: GPIO4
+    num_leds: 128
+    rgb_order: GRB
+    name: "led_matrix"
+    id: led_matrix_light
+    default_transition_length: 0s
+    color_correct: [50%, 50%, 50%]
+    internal: true
+    restore_mode: ALWAYS_ON
+ 
+display:
+  - platform: addressable_light
+    id: led_matrix_display
+    addressable_light_id: led_matrix_light
+    width: 16
+    height: 8
+    rotation: 0°
+    update_interval: 200ms
+    lambda: |-
+      static int16_t xpos = it.get_width();
+      const char * text = id(led_matrix_text).state.c_str();
+
+      auto color = Color(0, 0, 255);
+      int x_start, y_start;
+      int width, height;
+
+      it.get_text_bounds(
+        0, 0, text, id(tinyfont), 
+        TextAlign::TOP_LEFT,
+        &x_start, &y_start, &width, &height
+      );
+
+      if(xpos < -1 * width) {
+        xpos = it.get_width();
+      }
+
+      if(width <= it.get_width()) {
+            xpos = 0;
+          }
+
+      it.print(
+        xpos,
+        0, 
+        id(tinyfont),
+        color, 
+        TextAlign::TOP_LEFT,
+        text
+      );
+      xpos--;
+  
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO18
+      inverted: True
+      mode:
+        input: true
+        pulldown: True
+    name: "Pixel B Button"
+    id: pixel_b
+
+  - platform: gpio
+    pin:
+      number: GPIO23
+      inverted: True
+      mode:
+        input: true
+        pulldown: True
+    name: "Pixel A Button"
+    id: pixel_a
+
+  - platform: gpio
+    pin:
+      number: GPIO35
+      inverted: True
+      mode:
+        input: true
+    name: "Pixel Up Button"
+    id: pixel_u
+
+  - platform: gpio
+    pin:
+      number: GPIO34
+      inverted: True
+      mode:
+        input: true
+    name: "Pixel Down Button"
+    id: pixel_d
+
+  - platform: gpio
+    pin:
+      number: GPIO26
+      inverted: True
+      mode:
+        input: true
+        pulldown: True
+    name: "Pixel Left Button"
+    id: pixel_l
+
+  - platform: gpio
+    pin:
+      number: GPIO25
+      inverted: True
+      mode:
+        input: true
+        pulldown: True
+    name: "Pixel Right Button"
+    id: pixel_r
+
+  - platform: gpio
+    pin:
+      number: GPIO27
+      inverted: True
+      mode:
+        input: true
+        pulldown: True
+    name: "Pixel Center Button"
+    id: pixel_c
